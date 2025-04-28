@@ -1,6 +1,7 @@
 import React from 'react';
 import { Box, Typography } from '@mui/material';
 import RecipeCard from './RecipeCard';
+import { useFavorites } from '../context/FavoritesContext';
 
 interface Recipe {
   id: number;
@@ -12,11 +13,11 @@ interface Recipe {
 
 interface RecipeListProps {
   recipes: Recipe[];
-  favorites: number[];
-  onToggleFavorite: (recipeId: number) => void;
 }
 
-const RecipeList: React.FC<RecipeListProps> = ({ recipes, favorites, onToggleFavorite }) => {
+const RecipeList: React.FC<RecipeListProps> = ({ recipes }) => {
+  const { isFavorite, addFavorite, removeFavorite } = useFavorites();
+
   if (recipes.length === 0) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
@@ -38,8 +39,14 @@ const RecipeList: React.FC<RecipeListProps> = ({ recipes, favorites, onToggleFav
         <Box key={recipe.id}>
           <RecipeCard
             recipe={recipe}
-            isFavorite={favorites.includes(recipe.id)}
-            onToggleFavorite={onToggleFavorite}
+            isFavorite={isFavorite(recipe.id)}
+            onToggleFavorite={(id) => {
+              if (isFavorite(id)) {
+                removeFavorite(id);
+              } else {
+                addFavorite(id);
+              }
+            }}
           />
         </Box>
       ))}

@@ -1,66 +1,60 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Container, CssBaseline, ThemeProvider, createTheme } from '@mui/material';
 import Header from './components/Header';
 import RecipeList from './components/RecipeList';
-import { searchRecipes } from './services/spoonacular';
-import { Recipe } from './components/RecipeCard';
+import { FavoritesProvider } from './context/FavoritesContext';
+import { useRecipeApi } from './hooks/useRecipeApi';
 
 const theme = createTheme({
   palette: {
     mode: 'light',
     primary: {
-      main: '#1976d2',
+      main: '#FF9800', // Warm orange
+      light: '#FFB74D',
+      dark: '#F57C00',
     },
     secondary: {
-      main: '#dc004e',
+      main: '#9C27B0', // Rich purple
+      light: '#BA68C8',
+      dark: '#7B1FA2',
+    },
+    background: {
+      default: '#FFF8E1', // Warm light background
+      paper: '#FFFFFF',
+    },
+  },
+  components: {
+    MuiAppBar: {
+      styleOverrides: {
+        root: {
+          background: 'linear-gradient(45deg, #FF9800 30%, #9C27B0 90%)',
+        },
+      },
     },
   },
 });
 
 function App() {
-  const [recipes, setRecipes] = useState<Recipe[]>([]);
-  const [favorites, setFavorites] = useState<number[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const handleSearch = async (query: string) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const results = await searchRecipes(query);
-      setRecipes(results);
-    } catch (err) {
-      setError('Failed to fetch recipes. Please try again.');
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleToggleFavorite = (recipeId: number) => {
-    setFavorites(prev => 
-      prev.includes(recipeId)
-        ? prev.filter(id => id !== recipeId)
-        : [...prev, recipeId]
-    );
-  };
+  const { recipes, loading, error, search } = useRecipeApi();
 
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <Header onSearch={handleSearch} />
-      <Container maxWidth="lg" sx={{ mt: 4 }}>
-        {error && <div style={{ color: 'red', textAlign: 'center', marginTop: '20px' }}>{error}</div>}
-        {loading ? (
-          <div style={{ textAlign: 'center', marginTop: '20px' }}>Loading...</div>
-        ) : (
-          <RecipeList
-            recipes={recipes}
-            favorites={favorites}
-            onToggleFavorite={handleToggleFavorite}
-          />
-        )}
-      </Container>
+      <FavoritesProvider>
+        <Header onSearch={search} />
+        <Container maxWidth="lg" sx={{ mt: 4 }}>
+          {error && (
+            <div style={{ color: 'red', textAlign: 'center', marginTop: '20px' }}>
+              {error}
+            </div>
+          )}
+          {loading ? (
+            <div style={{ textAlign: 'center', marginTop: '20px' }}>Loading...</div>
+          ) : (
+            <RecipeList recipes={recipes} />
+          )}
+        </Container>
+      </FavoritesProvider>
     </ThemeProvider>
   );
 }
